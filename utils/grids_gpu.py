@@ -11,22 +11,12 @@ import torch
 import torch_geometric as tg
 import numpy as np
 import scipy.sparse as sp
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-from networkx.drawing.nx_pylab import draw_networkx
-from pyamg.gallery.diffusion import diffusion_stencil_2d
-from pyamg.gallery import stencil_grid
 from torch_geometric.data import Data
 import torch_geometric
-import copy
 import fem
 from Unstructured import rand_grid_gen, from_scipy_sparse_matrix, from_networkx, lloyd_aggregation
 import pyamg
 import scipy
-from scipy.spatial import ConvexHull, convex_hull_plot_2d
-import time
-
-mpl.rcParams['figure.dpi'] = 300
 
 def graph_from_matrix(A, agg_op):
     n = A.shape[0]
@@ -190,33 +180,6 @@ class Old_Grid(object):
                         
         return 
     
-    
-    def plot(self, size, w, labeling, fsize):
-        
-        G = nx.from_scipy_sparse_matrix(self.A)
-        G.remove_edges_from(nx.selfloop_edges(G))
-        
-        mymsh = self.mesh
-        
-        # points = mymsh.N
-        # edges  = mymsh.Edges
-        
-        pos_dict = {}
-        for i in range(mymsh.nv):
-            pos_dict[i] = [mymsh.X[i], mymsh.Y[i]]
-            
-        # G.add_nodes_from(points)
-        # G.add_edges_from(edges)
-        colors = [i for i in range(mymsh.nv)]
-        
-        for i in range(self.num_nodes):
-            colors[i] = 'r'
-
-        
-        draw_networkx(G, pos=pos_dict, with_labels=labeling, node_size=size, \
-                      node_color = colors, node_shape = 'o', width = w, font_size = fsize)
-        
-        plt.axis('equal')
         
 def structured_2d_poisson_dirichlet(n_pts_x, n_pts_y,
                                         xdim=(0,1), ydim=(0,1),
@@ -357,67 +320,7 @@ def refine_grid(grid, levels, ratio = None):
     
     return new_grid
     
-def plot_color(grid, size, w, labeling, fsize, node_color, perm = None,\
-         colorbar = True, vmin=None, vmax = None, cmap=None):
-    
-    G = nx.from_scipy_sparse_matrix(grid.A)
-    G.remove_edges_from(nx.selfloop_edges(G))
-    
-    mymsh = grid.mesh
-    
-    # points = mymsh.N
-    # edges  = mymsh.Edges
-    
-    pos_dict = {}
-    for i in range(mymsh.nv):
-        pos_dict[i] = [mymsh.X[i], mymsh.Y[i]]
-        
-    # G.add_nodes_from(points)
-    # G.add_edges_from(edges)
-    colors = [i for i in range(mymsh.nv)]
-    
-    for i in range(grid.A.shape[0]):
-        colors[i] = node_color[i]
 
-    
-    vmin = -abs(node_color).max() if vmin == None else vmin
-    vmax = abs(node_color).max() if vmax == None else vmax
-    cmap = plt.cm.coolwarm  if cmap == None else cmap
-    colors = np.array(colors)
-    # map colorbar to [vmin, vmax]
-    # a = (vmax-vmin)/(colors.max()-colors.min())
-    # b = vmax-colors.max()*a
-    # colors = a*colors + b
-    
-    draw_networkx(G, pos=pos_dict, with_labels=labeling, node_size=size, \
-                  node_color = colors.tolist(), node_shape = 'o', width = w, font_size = fsize \
-                  , cmap=cmap, vmin=vmin, vmax=vmax)
-        
-    if perm != None:
-        
-        G_coarse = G.subgraph(perm)
-        
-        for i in range(grid.A.shape[0]):
-            colors[i] = node_color[i]
-
-        pos_dict_coarse = {}
-        for i in perm:
-            pos_dict_coarse[i] = [mymsh.X[i], mymsh.Y[i]]
-        
-        colors_coarse = ['k' for i in range(len(perm))]
-        
-        draw_networkx(G_coarse, pos=pos_dict_coarse, with_labels=labeling, node_size=4*size, \
-                      node_color = colors_coarse, node_shape = '*', width = w, font_size = fsize)
-        
-    
-        
-    
-    if colorbar:
-        sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=vmin, vmax=vmax))
-        sm.set_array([])
-        plt.colorbar(sm)
-        
-    plt.axis('equal')
         
 class Grid_PWA():
     def __init__(self, A, mesh, ratio, hops = 1, cut=1, h = 1, nu = 0, BC = 'Neumann', boundary = None):

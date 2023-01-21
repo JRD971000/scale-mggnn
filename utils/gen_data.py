@@ -20,8 +20,7 @@ from Unstructured import *
 import scipy
 from grids_gpu import *
 import time
-mpl.rcParams['figure.dpi'] = 300
-from utils import *
+from utils_gpu import *
 import argparse
 from torch_geometric.data import Data, HeteroData
 from pyamg.aggregation import lloyd_aggregation
