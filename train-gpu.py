@@ -19,8 +19,8 @@ import copy
 import random
 from Unstructured import *
 import scipy
-from grids import *
-from utils import *
+from grids_gpu import *
+from utils_gpu import *
 import argparse
 from mggnn import *
 from lloyd_gunet import *
@@ -44,7 +44,6 @@ train_parser.add_argument('--GNN', type=str, default='MG-GNN', help='MG-GNN or G
 train_parser.add_argument('--path', type=str, default='Models/new-model', help='MG-GNN or Graph-Unet')
 
 train_args = train_parser.parse_args()
-
 
 if __name__ == "__main__":
     
