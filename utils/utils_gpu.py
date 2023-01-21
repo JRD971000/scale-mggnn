@@ -256,7 +256,7 @@ def stationary_cycle(A, M, R0, err):
 
 def stationary_max(grid, out, u = None, K = None, precond_type = 'ML_ORAS'):
 
-    M = preconditioner(grid, out, train = True, precond_type = precond_type, u = u).to_dense()
+    M = preconditioner(grid, out, precond_type = precond_type, u = u).to_dense()
 
     list_l2 = []
     
