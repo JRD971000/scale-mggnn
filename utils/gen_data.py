@@ -12,14 +12,13 @@ import torch
 from pathlib import Path
 import os
 import os.path
-from grids import *
 import sys
 import torch as T
 import copy
 import random
 from Unstructured import *
 import scipy
-from grids import *
+from grids_gpu import *
 import time
 mpl.rcParams['figure.dpi'] = 300
 from utils import *
