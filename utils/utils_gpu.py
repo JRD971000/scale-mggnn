@@ -5,7 +5,6 @@ from pathlib import Path
 from torch.utils.data import Dataset
 from torch_geometric.data import DataLoader
 import os
-from grids import *
 # import fem
 import sys
 import torch as T

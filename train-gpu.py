@@ -13,7 +13,6 @@ import torch
 from pathlib import Path
 import os
 import os.path
-from grids import *
 import torch as T
 import copy
 import random
