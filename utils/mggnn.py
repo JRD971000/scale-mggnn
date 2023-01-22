@@ -30,6 +30,7 @@ from torch.nn.functional import relu, sigmoid
 from torch_geometric.nn.norm import PairNorm
 from NNs import EdgeModel
 import copy
+import numml.sparse as spml
 if torch.cuda.is_available():
     device = torch.device('cuda')
 else:
@@ -207,21 +208,31 @@ class MGGNN(torch.nn.Module):
                                                       (grid.R0.shape[0], grid.R0.shape[1])).double()
         
         
-        if train:
-            out_R = out_R.to_dense()/out_R.to_dense().sum(0)
+        
+        sum_row_mat = 1/torch.sparse.sum(out_R, dim = 0).coalesce().values()
+        sum_row_mat = spml.SparseCSRTensor(torch.sparse_coo_tensor([np.arange(sum_row_mat.shape[0]).tolist(),
+                                                  np.arange(sum_row_mat.shape[0]).tolist()], sum_row_mat, 
+                                                  (sum_row_mat.shape[0], sum_row_mat.shape[0])).double())#.to_sparse_csr()
+          
+        out_R = sum_row_mat @ spml.SparseCSRTensor(out_R).T#.to_sparse_csr().t()
 
-            out_R = out_R.to_sparse()
+        out_R = out_R.T
+        
+        # if train:
+        #     out_R = out_R.to_dense()/out_R.to_dense().sum(0)
+
+        #     out_R = out_R.to_sparse()
             
-        else:
+        # else:
             
-            sum_row_mat = 1/torch.sparse.sum(out_R, dim = 0).coalesce().values()
-            sum_row_mat = torch.sparse_coo_tensor([np.arange(sum_row_mat.shape[0]).tolist(),
-                                                      np.arange(sum_row_mat.shape[0]).tolist()], sum_row_mat, 
-                                                      (sum_row_mat.shape[0], sum_row_mat.shape[0])).double().to_sparse_csr()
+        #     sum_row_mat = 1/torch.sparse.sum(out_R, dim = 0).coalesce().values()
+        #     sum_row_mat = torch.sparse_coo_tensor([np.arange(sum_row_mat.shape[0]).tolist(),
+        #                                               np.arange(sum_row_mat.shape[0]).tolist()], sum_row_mat, 
+        #                                               (sum_row_mat.shape[0], sum_row_mat.shape[0])).double().to_sparse_csr()
               
-            out_R = sum_row_mat @ out_R.to_sparse_csr().t()
+        #     out_R = sum_row_mat @ out_R.to_sparse_csr().t()
     
-            out_R = out_R.t().to_sparse_coo()
+        #     out_R = out_R.t().to_sparse_coo()
 
         
         # out_R = make_sparse_torch(grid.neigh_R0)
@@ -236,17 +247,11 @@ class MGGNN(torch.nn.Module):
         # out =  edge_attr  #torch.nn.functional.relu(edge_attr) # torch.nn.functional.leaky_relu(edge_attr)
         sz = grid.gdata.x.shape[0]
         out = torch.sparse_coo_tensor([row, col], edge_attr.flatten(),(sz, sz)).double()#.to_dense()
+        out = spml.SparseCSRTensor(out)
         # print(out.shape)
         # out0 = torch.zeros((out.shape[0], out.shape[0])).double()
         # print(out0.shape)
         
-        if train:
-            
-            out = out.to_dense()
-            
-        else:
-            
-            out = out.to_sparse_csr()
             
         return out, out_R# + torch.sparse_coo_tensor([grid.R0.nonzero()[0].tolist(), grid.R0.nonzero()[1].tolist()], 
                                                         #  torch.tensor(grid.R0.data).float(),

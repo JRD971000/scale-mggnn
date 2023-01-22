@@ -19,7 +19,7 @@ import numpy as np
 import scipy as sp
 from pyamg import amg_core
 import numml.sparse as spml
-
+import numml
 if torch.cuda.is_available():
     device = torch.device('cuda')
 else:
@@ -36,16 +36,19 @@ def get_Li (L, grid):
         nz = grid.list_cut_aggs[i]
 
         learnables = grid.learn_nodes[i]
-
+        learn_mat = torch.sparse_coo_tensor(torch.tensor([[j for j in range(len(learnables))],learnables]), 
+                                                        torch.tensor([1. for j in range(len(learnables))]), 
+                                                        (len(learnables),L.shape[0])).float()
+        learn_mat = spml.SparseCSRTensor(learn_mat)
         
-        L_i[i] = torch.zeros(len(nz),len(nz)).double().to(device)
+        L_i[i] = torch.zeros(len(nz),len(nz)).float().to(device)
 
         list_idx = []
 
         for l in learnables:
             list_idx.append(nz.index(l))
-        
-        L_i[i][np.ix_(list_idx, list_idx)] = L[np.ix_(learnables, learnables)]
+        # print(L[learnables])
+        L_i[i][np.ix_(list_idx, list_idx)] = (learn_mat @ L @ learn_mat.T).to_dense()#L[np.ix_(learnables, learnables)]
         
 
     return L_i
@@ -128,7 +131,7 @@ def preconditioner(grid, output, precond_type = False, u = None):
     elif precond_type == 'ML_ORAS':
         
 
-        L = get_Li (output, grid)
+        L = get_Li (output[0], grid)
 
         for i in range(grid.aggop[0].shape[-1]):
             
@@ -256,20 +259,20 @@ def stationary_cycle(A, M, R0, err):
 
 def stationary_max(grid, out, u = None, K = None, precond_type = 'ML_ORAS'):
 
-    M = preconditioner(grid, out, precond_type = precond_type, u = u).to_dense()
+    M = spml.SparseCSRTensor(preconditioner(grid, out, precond_type = precond_type, u = u))#.to_dense()
 
     list_l2 = []
     
     out_lmax = spml.SparseCSRTensor(copy.deepcopy(u)).to(device)
     list_max = torch.zeros(K).to(device)
     tsA = spml.SparseCSRTensor(make_sparse_torch(grid.A)).to(device)
-    R0 = spml.SparseCSRTensor(out[1])
+    R0 = out[1]#spml.SparseCSRTensor(out[1])
 
     for k in range(K):
 
         out_lmax = stationary_cycle(tsA, M, R0, out_lmax) #+ out_lmax*1e-2
-        
-        l2 = torch.norm(out_lmax, p='fro', dim = 0)
+
+        l2 = torch.norm(out_lmax.to_dense(), p='fro', dim = 0)
 
         list_max[k] = max(l2) ** (1/(k+1))
         list_l2.append(l2)
@@ -279,12 +282,15 @@ def stationary_max(grid, out, u = None, K = None, precond_type = 'ML_ORAS'):
     mloras_Pcol_norm = 0
     ras_Pcol_norm = 0
     
-    r0 = torch.tensor(grid.R0.toarray()).to(device)
+    r0 = spml.SparseCSRTensor(make_sparse_torch(grid.neigh_R0)).to(device)
 
     for i in range(grid.R0.shape[0]):
-        
-        mloras_Pcol_norm += R0[i] @ tsA @ R0.T[:,i]
-        ras_Pcol_norm += r0[i] @ tsA @ r0.t()[:,i]
+        idx_mat = spml.SparseCSRTensor(torch.sparse_coo_tensor(torch.tensor([[0],[i]]), 
+                                                        torch.tensor([1. ]), 
+                                                        (1,grid.R0.shape[0])).float())
+                
+        mloras_Pcol_norm += (((idx_mat @ R0) @ tsA @ (idx_mat @ R0).T).to_dense()).flatten()
+        ras_Pcol_norm += (((idx_mat @ r0) @ tsA @ (idx_mat @ r0).T).to_dense()).flatten()
     
     pcol_loss = mloras_Pcol_norm/ras_Pcol_norm
     
