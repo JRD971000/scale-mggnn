@@ -59,13 +59,12 @@ if __name__ == "__main__":
     for i in range(num_data):
 
         g = torch.load(train_args.data_set+"/grid"+str(i)+".pth")
-        g.to(device)
         list_grids.append(g)
 
     print('Finished Uploading Training Data')
     
     if train_args.GNN == 'MG-GNN':
-        model = MGGNN(lvl=3, dim_embed=128, num_layers=4, K=train_args.TAGConv_k, ratio=0.2, lr=train_args.lr)
+        model = MGGNN(lvl=3, dim_embed=128, num_layers=1, K=train_args.TAGConv_k, ratio=0.2, lr=train_args.lr)
     elif train_args.GNN == 'Graph-Unet':
         model = lloyd_gunet(2, 4, 128, K = 2, ratio = 0.2, lr = train_args.lr)
     else:
@@ -98,7 +97,7 @@ if __name__ == "__main__":
             for i in batch_idxs:
 
                 grid = list_grids[i]
-                
+                grid.to(device)
                 output = model.forward(grid, train = True)
                 
                 u = torch.rand(grid.x.shape[0],100).double().to(device)

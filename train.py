@@ -65,7 +65,7 @@ if __name__ == "__main__":
     print('Finished Uploading Training Data')
     
     if train_args.GNN == 'MG-GNN':
-        model = MGGNN(lvl=3, dim_embed=128, num_layers=4, K=train_args.TAGConv_k, ratio=0.2, lr=train_args.lr)
+        model = MGGNN(lvl=2, dim_embed=128, num_layers=4, K=train_args.TAGConv_k, ratio=0.2, lr=train_args.lr)
     elif train_args.GNN == 'Graph-Unet':
         model = lloyd_gunet(3, 4, 128, K = 2, ratio = 0.2, lr = train_args.lr)
     else:
@@ -107,6 +107,7 @@ if __name__ == "__main__":
                 loss += current_loss
             
             if loss > 2.5 * mbs:
+                print("Bad initialization")
                 sys.exit()
             
             loss.backward()
