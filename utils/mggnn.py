@@ -146,11 +146,20 @@ class MGGNN(torch.nn.Module):
         
     def forward(self, grid, train):
         
-        x_dict, edge_index_dict,  edge_attr_dict = copy.deepcopy(grid.dict_data)
+        x_dict, edge_index_dict,  edge_attr_dict = copy.deepcopy(grid.dict_data).to(device)
         
-        x_dict = x_dict.to(device)
-        edge_index_dict = edge_index_dict.to(device)
-        edge_attr_dict = edge_attr_dict.to(device)
+        for key in x_dict.keys():
+
+            x_dict[key] = x_dict[key].to(device)
+            
+        for key in edge_index_dict.keys():
+
+            edge_index_dict[key] = edge_index_dict[key].to(device)
+            
+        for key in edge_attr_dict.keys():
+
+            edge_attr_dict[key] = edge_attr_dict[key].to(device)
+        
 
         edge_attr_dict[('L0', '-', 'L0')] = self.pre_edge_main(edge_attr_dict[('L0', '-', 'L0')])
         
