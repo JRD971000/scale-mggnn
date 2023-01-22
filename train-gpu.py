@@ -107,9 +107,9 @@ if __name__ == "__main__":
 
                 loss += current_loss
             
-            if loss > 2.5 * mbs:
-                print("Bad initializations")
-                sys.exit()
+            # if loss > 2.5 * mbs:
+            #     print("Bad initializations")
+            #     sys.exit()
             
             loss.backward()
 

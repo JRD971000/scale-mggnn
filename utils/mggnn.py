@@ -146,7 +146,7 @@ class MGGNN(torch.nn.Module):
         
     def forward(self, grid, train):
         
-        x_dict, edge_index_dict,  edge_attr_dict = copy.deepcopy(grid.dict_data).to(device)
+        x_dict, edge_index_dict,  edge_attr_dict = copy.deepcopy(grid.dict_data)
         
         for key in x_dict.keys():
 
