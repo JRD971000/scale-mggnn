@@ -11,7 +11,7 @@ import torch as T
 import copy
 import random
 import scipy
-from grids import *
+from grids_gpu import *
 import time
 # mpl.rcParams['figure.dpi'] = 300
 import numpy as np

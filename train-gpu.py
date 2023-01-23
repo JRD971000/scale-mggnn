@@ -17,7 +17,7 @@ import torch as T
 import copy
 import random
 import scipy
-from grids import *
+from grids_gpu import *
 from utils_gpu import *
 import argparse
 from mggnn import *
