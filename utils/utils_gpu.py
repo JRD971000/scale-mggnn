@@ -10,9 +10,8 @@ import sys
 import torch as T
 import copy
 import random
-from torch.utils.tensorboard import SummaryWriter
 import scipy
-from grids_gpu import *
+from grids import *
 import time
 # mpl.rcParams['figure.dpi'] = 300
 import numpy as np
@@ -38,10 +37,10 @@ def get_Li (L, grid):
         learnables = grid.learn_nodes[i]
         learn_mat = torch.sparse_coo_tensor(torch.tensor([[j for j in range(len(learnables))],learnables]), 
                                                         torch.tensor([1. for j in range(len(learnables))]), 
-                                                        (len(learnables),L.shape[0])).float()
+                                                        (len(learnables),L.shape[0])).double()
         learn_mat = spml.SparseCSRTensor(learn_mat)
         
-        L_i[i] = torch.zeros(len(nz),len(nz)).float().to(device)
+        L_i[i] = torch.zeros(len(nz),len(nz)).double().to(device)
 
         list_idx = []
 
@@ -266,7 +265,7 @@ def stationary_max(grid, out, u = None, K = None, precond_type = 'ML_ORAS'):
     out_lmax = spml.SparseCSRTensor(copy.deepcopy(u)).to(device)
     list_max = torch.zeros(K).to(device)
     tsA = spml.SparseCSRTensor(make_sparse_torch(grid.A)).to(device)
-    R0 = out[1]#spml.SparseCSRTensor(out[1])
+    R0 = out[1].double()#spml.SparseCSRTensor(out[1])
 
     for k in range(K):
 
@@ -282,12 +281,12 @@ def stationary_max(grid, out, u = None, K = None, precond_type = 'ML_ORAS'):
     mloras_Pcol_norm = 0
     ras_Pcol_norm = 0
     
-    r0 = spml.SparseCSRTensor(make_sparse_torch(grid.neigh_R0)).to(device)
+    r0 = spml.SparseCSRTensor(make_sparse_torch(grid.neigh_R0)).to(device).double()
 
     for i in range(grid.R0.shape[0]):
         idx_mat = spml.SparseCSRTensor(torch.sparse_coo_tensor(torch.tensor([[0],[i]]), 
                                                         torch.tensor([1. ]), 
-                                                        (1,grid.R0.shape[0])).float())
+                                                        (1,grid.R0.shape[0])).double())
                 
         mloras_Pcol_norm += (((idx_mat @ R0) @ tsA @ (idx_mat @ R0).T).to_dense()).flatten()
         ras_Pcol_norm += (((idx_mat @ r0) @ tsA @ (idx_mat @ r0).T).to_dense()).flatten()

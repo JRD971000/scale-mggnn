@@ -546,7 +546,7 @@ class Grid_PWA():
     def to(self, device):
         
         self.gdata = self.gdata.to(device)
-        self.gmask = self.gmask.to(device)
+        # self.gmask = self.gmask.to(device)
         
     @property
 

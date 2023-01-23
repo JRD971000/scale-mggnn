@@ -1,0 +1,17 @@
+matplotlib==3.4.3
+networkx==2.7.1
+numpy==1.21.2 
+pyamg==4.2.2
+scipy==1.7.3
+torch==1.11.0
+torchaudio==0.11.0
+torchmetrics==0.7.2
+torchvision==0.12.0
+tqdm==4.63.0
+pygmsh==7.1.17
+shapely==2.0.0
+
+#pip install pyg-lib --no-index -f https://data.pyg.org/whl/torch-1.11.0+cpu.html 
+#pip install torch-scatter --no-index -f https://data.pyg.org/whl/torch-1.11.0+cpu.html 
+#pip install torch-sparse --no-index -f https://data.pyg.org/whl/torch-1.11.0+cpu.html 
+#pip install torch-geometric==2.0.4

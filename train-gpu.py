@@ -16,9 +16,8 @@ import os.path
 import torch as T
 import copy
 import random
-from Unstructured import *
 import scipy
-from grids_gpu import *
+from grids import *
 from utils_gpu import *
 import argparse
 from mggnn import *
@@ -63,7 +62,7 @@ if __name__ == "__main__":
         list_grids.append(g)
 
     print('Finished Uploading Training Data')
-    kir
+    
     if train_args.GNN == 'MG-GNN':
         model = MGGNN(lvl=3, dim_embed=128, num_layers=1, K=train_args.TAGConv_k, ratio=0.2, lr=train_args.lr)
     elif train_args.GNN == 'Graph-Unet':

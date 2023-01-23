@@ -14,41 +14,152 @@ import scipy.sparse as sp
 from torch_geometric.data import Data
 import torch_geometric
 import fem
-from Unstructured import rand_grid_gen, from_scipy_sparse_matrix, from_networkx, lloyd_aggregation
 import pyamg
 import scipy
+from scipy.sparse import csr_matrix, coo_matrix, isspmatrix_csr, isspmatrix_csc
+from pyamg.graph import lloyd_cluster
 
-def graph_from_matrix(A, agg_op):
-    n = A.shape[0]
+def lloyd_aggregation(C, ratio=0.03, distance='unit', maxiter=10000):
+    """Aggregate nodes using Lloyd Clustering.
 
-    G = nx.from_scipy_sparse_matrix(A, edge_attribute='weight', parallel_edges=False, create_using=nx.DiGraph)
-    x = torch.ones(n) / n
+    Parameters
+    ----------
+    C : csr_matrix
+        strength of connection matrix
+    ratio : scalar
+        Fraction of the nodes which will be seeds.
+    distance : ['unit','abs','inv',None]
+        Distance assigned to each edge of the graph G used in Lloyd clustering
 
-    # Create cluster feature
-    clusters = np.array(agg_op.argmax(axis=1)).flatten()
-    cluster_adj = {} # 0 if in same cluster, 1 if not
-    for (u, v) in nx.edges(G):
-        adj = (0 if (clusters[u] == clusters[v]) else 1)
-        cluster_adj[(u, v)] = adj
+        For each nonzero value C[i,j]:
 
-    nx.set_edge_attributes(G, cluster_adj, 'cluster_adj')
-    nx_data = tg.utils.from_networkx(G, None, ['weight', 'cluster_adj'])
-    return tg.data.Data(x=x, edge_index=nx_data.edge_index, edge_attr=abs(nx_data.edge_attr.float()))
+        =======  ===========================
+        'unit'   G[i,j] = 1
+        'abs'    G[i,j] = abs(C[i,j])
+        'inv'    G[i,j] = 1.0/abs(C[i,j])
+        'same'   G[i,j] = C[i,j]
+        'sub'    G[i,j] = C[i,j] - min(C)
+        =======  ===========================
 
-def graph_from_matrix_basic(A):
-    n = A.shape[0]
+    maxiter : int
+        Maximum number of iterations to perform
 
-    G = nx.from_scipy_sparse_matrix(A, edge_attribute='weight', parallel_edges=False, create_using=nx.DiGraph)
-    x = torch.ones(n) / n
+    Returns
+    -------
+    AggOp : csr_matrix
+        aggregation operator which determines the sparsity pattern
+        of the tentative prolongator
+    seeds : array
+        array of Cpts, i.e., Cpts[i] = root node of aggregate i
 
-    # Create cluster feature
-    cluster_adj = {} # 0 if in same cluster, 1 if not
-    for (u, v) in nx.edges(G):
-        cluster_adj[(u, v)] = 1.0 / n
+    See Also
+    --------
+    amg_core.standard_aggregation
 
-    nx.set_edge_attributes(G, cluster_adj, 'cluster_adj')
-    nx_data = tg.utils.from_networkx(G, None, ['weight', 'cluster_adj'])
-    return tg.data.Data(x=x, edge_index=nx_data.edge_index, edge_attr=abs(nx_data.edge_attr.float()))
+    Examples
+    --------
+    >>> from scipy.sparse import csr_matrix
+    >>> from pyamg.gallery import poisson
+    >>> from pyamg.aggregation.aggregate import lloyd_aggregation
+    >>> A = poisson((4,), format='csr')   # 1D mesh with 4 vertices
+    >>> A.todense()
+    matrix([[ 2., -1.,  0.,  0.],
+            [-1.,  2., -1.,  0.],
+            [ 0., -1.,  2., -1.],
+            [ 0.,  0., -1.,  2.]])
+    >>> lloyd_aggregation(A)[0].todense() # one aggregate
+    matrix([[1],
+            [1],
+            [1],
+            [1]], dtype=int8)
+    >>> # more seeding for two aggregates
+    >>> Agg = lloyd_aggregation(A,ratio=0.5)[0].todense()
+
+    """
+    if ratio <= 0 or ratio > 1:
+        raise ValueError('ratio must be > 0.0 and <= 1.0')
+
+    if not (isspmatrix_csr(C) or isspmatrix_csc(C)):
+        raise TypeError('expected csr_matrix or csc_matrix')
+
+    if distance == 'unit':
+        data = np.ones_like(C.data).astype(float)
+    elif distance == 'abs':
+        data = abs(C.data)
+    elif distance == 'inv':
+        data = 1.0/abs(C.data)
+    elif distance is 'same':
+        data = C.data
+    elif distance is 'min':
+        data = C.data - C.data.min()
+    else:
+        raise ValueError('unrecognized value distance=%s' % distance)
+
+    if C.dtype == complex:
+        data = np.real(data)
+
+    assert(data.min() >= 0)
+
+    G = C.__class__((data, C.indices, C.indptr), shape=C.shape)
+
+    num_seeds = int(min(max(ratio * G.shape[0], 1), G.shape[0]))
+
+    distances, clusters, seeds = lloyd_cluster(G, num_seeds, maxiter=maxiter)
+
+    row = (clusters >= 0).nonzero()[0]
+    col = clusters[row]
+    data = np.ones(len(row), dtype='int8')
+    AggOp = coo_matrix((data, (row, col)),
+                       shape=(G.shape[0], num_seeds)).tocsr()
+    
+    return AggOp, seeds, col
+
+def from_networkx(G):
+    r"""Converts a :obj:`networkx.Graph` or :obj:`networkx.DiGraph` to a
+    :class:`torch_geometric.data.Data` instance.
+
+    Args:
+        G (networkx.Graph or networkx.DiGraph): A networkx graph.
+    """
+
+    G = nx.convert_node_labels_to_integers(G)
+    G = G.to_directed() if not nx.is_directed(G) else G
+    edge_index = torch.LongTensor(list(G.edges)).t().contiguous()
+
+    data = {}
+
+    for i, (_, feat_dict) in enumerate(G.nodes(data=True)):
+        for key, value in feat_dict.items():
+            data[str(key)] = [value] if i == 0 else data[str(key)] + [value]
+
+    for i, (_, _, feat_dict) in enumerate(G.edges(data=True)):
+        for key, value in feat_dict.items():
+            data[str(key)] = [value] if i == 0 else data[str(key)] + [value]
+
+    for key, item in data.items():
+        try:
+            data[key] = torch.tensor(item)
+        except ValueError:
+            pass
+
+    data['edge_index'] = edge_index.view(2, -1)
+    data = torch_geometric.data.Data.from_dict(data)
+    data.num_nodes = G.number_of_nodes()
+
+    return data
+
+def from_scipy_sparse_matrix(A):
+    r"""Converts a scipy sparse matrix to edge indices and edge attributes.
+
+    Args:
+        A (scipy.sparse): A sparse matrix.
+    """
+    A = A.tocoo()
+    row = torch.from_numpy(A.row).to(torch.long)
+    col = torch.from_numpy(A.col).to(torch.long)
+    edge_index = torch.stack([row, col], dim=0)
+    edge_weight = torch.from_numpy(A.data)
+    return edge_index, edge_weight
 
 class MyMesh:
     def __init__(self, mesh):
@@ -251,12 +362,6 @@ def structured_2d_poisson_dirichlet(n_pts_x, n_pts_y,
 
         return A #Grid(A, grid_x)
     
-    
-def uns_grid(meshsz):
-    
-    old_g  = rand_grid_gen(meshsz, 'Poisson')
-    
-    return old_g
 
 import math
 

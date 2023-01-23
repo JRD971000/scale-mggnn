@@ -165,9 +165,9 @@ def generate_data(data_args, show_fig = False):
 
     for i in range(data_args.num_data):
         
-        lcmin = 0.1#np.random.uniform(0.105, 0.12)
+        lcmin = 0.2#np.random.uniform(0.105, 0.12)
 
-        lcmax = 0.1#np.random.uniform(0.10, 0.12)
+        lcmax = 0.2#np.random.uniform(0.10, 0.12)
         n = np.random.choice([3,4,5,6,7,8,9,10,20,40])
         randomized = True if np.random.rand() < 0.4 else True
         g = rand_grid_gen1(randomized = randomized, n = n, min_ = 0.03, min_sz = 0.6, 

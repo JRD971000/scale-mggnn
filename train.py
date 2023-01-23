@@ -17,7 +17,7 @@ from grids import *
 import torch as T
 import copy
 import random
-from Unstructured import *
+# from Unstructured import *
 import scipy
 from grids import *
 from utils import *
@@ -106,9 +106,9 @@ if __name__ == "__main__":
 
                 loss += current_loss
             
-            if loss > 2.5 * mbs:
-                print("Bad initialization")
-                sys.exit()
+            # if loss > 2.5 * mbs:
+            #     print("Bad initialization")
+            #     sys.exit()
             
             loss.backward()
 
