@@ -1,27 +1,16 @@
 networkx==2.7.1
 numpy==1.21.2 
 pyamg==4.2.2
-matplotlib==3.4.3
 scipy==1.7.3
-#torch==1.11.0
-#torchaudio==0.11.0
-#torchmetrics==0.7.2
-#torchvision==0.12.0
+torch==1.11.0
+torchaudio==0.11.0
+torchmetrics==0.7.2
+torchvision==0.12.0
 tqdm==4.63.0
 pygmsh==7.1.17
 shapely==2.0.0
-torch==1.12.0 
-torchvision==0.13.0 
-torchaudio==0.12.0
+torch==1.12.0+cu113 torchvision==0.13.0+cu113 torchaudio==0.12.0 --extra-index-url https://download.pytorch.org/whl/cu113
+pyg-lib torch-scatter torch-sparse -f https://data.pyg.org/whl/torch-1.12.0+cu113.html
+torch-geometric
+matplotlib==3.4.3
 
-#pip install pyg-lib -f https://data.pyg.org/whl/torch-1.12.0+cpu.html
-#pip install torch-scatter -f https://data.pyg.org/whl/torch-1.12.0+cpu.html
-#pip install torch-sparse -f https://data.pyg.org/whl/torch-1.12.0+cpu.html
-#pip install torch-cluster -f https://data.pyg.org/whl/torch-1.12.0+cpu.html
-#pip install torch-spline-conv -f https://data.pyg.org/whl/torch-1.12.0+cpu.html
-#pip install torch-geometric -f https://data.pyg.org/whl/torch-1.12.0+cpu.html
-
-#pip install pyg-lib --no-index -f https://data.pyg.org/whl/torch-1.11.0+cpu.html 
-#pip install torch-scatter --no-index -f https://data.pyg.org/whl/torch-1.11.0+cpu.html 
-#pip install torch-sparse --no-index -f https://data.pyg.org/whl/torch-1.11.0+cpu.html 
-#pip install torch-geometric==2.0.4
