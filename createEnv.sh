@@ -3,7 +3,7 @@
 [ -d testEnv ] && rm -rf testEnv && echo Removing existing venv...
 
 module load cuda/11.7
-module load python/3.10
+module load python/3.8
 python3 -m venv testEnv
 source testEnv/bin/activate
 pip install --upgrade pip
