@@ -8,8 +8,8 @@ export CUDA_MPS_PIPE_DIRECTORY=/tmp/nvidia-mps
 export CUDA_MPS_LOG_DIRECTORY=/tmp/nvidia-log
 nvidia-cuda-mps-control -d
 
-#cp -r testEnv $SLURM_TMPDIR/env
-source testEnv/bin/activate
+cp -r testEnv $SLURM_TMPDIR/env
+sourse $SLURM_TMPDIR/env/bin/activate
 
-cp -r numml testEnv/numml
-pip3 install testEnv/numml/.
+cp -r numml $SLURM_TMPDIR/numml
+pip3 install $SLURM_TMPDIR/numml/.
