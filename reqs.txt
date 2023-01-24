@@ -1,11 +1,4 @@
 networkx==2.7.1
 pyamg==4.2.2
 tqdm==4.63.0
-pygmsh
-gmsh-sdk
-shapely==2.0.0
-torch==1.12.0+cu113 torchvision==0.13.0+cu113 torchaudio==0.12.0 --extra-index-url https://download.pytorch.org/whl/cu113
-pyg-lib torch-scatter torch-sparse -f https://data.pyg.org/whl/torch-1.12.0+cu113.html
-torch-geometric
 matplotlib==3.4.3
-
