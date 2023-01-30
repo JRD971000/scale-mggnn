@@ -1,6 +1,6 @@
 module purge
-#module load cuda/11.7
-#module load python/3.8
+module load cuda/11.7
+module load python/3.8
 #module load scipy-stack
 
 export CUDA_VISIBLE_DEVICES=0

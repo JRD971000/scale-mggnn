@@ -6,4 +6,5 @@
 #SBATCH --time=0-1:00
 
 source makeNumml.sh
-python train-gpu.py --num-epoch = 2                     # you can use 'nvidia-smi' for a test
+#sourse testEnv/bin/activate
+python train-gpu.py --num-epoch=2                     # you can use 'nvidia-smi' for a test
