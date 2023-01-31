@@ -93,7 +93,7 @@ if __name__ == "__main__":
         for count in range(int(np.ceil((num_data)/mbs))):
 
             batch_idxs = all_indices[count*mbs:min((count+1)*mbs, num_data)]
-
+            t1 = time.time()
             for i in batch_idxs:
 
                 grid = list_grids[i]
@@ -116,7 +116,9 @@ if __name__ == "__main__":
             model.optimizer.step()
 
             epoch_loss += loss.item()
-            print ("batch = ", count, "loss = ", loss.item())
+            t2 = time.time()
+            batch_time = t2-t1
+            print ("batch = ", count, "loss = ", loss.item(), "time = ", np.round(batch_time, 2))
             model.optimizer.zero_grad() 
             
             loss = 0
