@@ -33,7 +33,7 @@ else:
 data_parser = argparse.ArgumentParser(description='Settings for generating data')
 
 data_parser.add_argument('--directory', type=str, default='../Data/new_data', help='Saving directory')
-data_parser.add_argument('--num-data', type=int, default=1, help='Number of generated data')
+data_parser.add_argument('--num-data', type=int, default=100, help='Number of generated data')
 data_parser.add_argument('--ratio', type=float, default=0.05, help='Lower and upper bound for ratio')
 data_parser.add_argument('--size', type=float, default=0.05, help='Mesh size')
 data_parser.add_argument('--hops', type=int, default=1, help='Learnable hops away from boundary')
@@ -162,35 +162,38 @@ def generate_data(data_args, show_fig = False):
     if not os.path.exists(path):
         os.makedirs(path)
         
-
+    num_node = 0
     for i in range(data_args.num_data):
-
-        n = np.random.choice([3,4,5,6,7,8,9,10,20,40])
-        randomized = True if np.random.rand() < 0.4 else True
-        g = rand_grid_gen1(randomized = randomized, n = n, min_ = 0.03, min_sz = 0.6, 
-                      lcmin = data_args.size, lcmax = data_args.size, distmin = 0.01, distmax = 0.035, PDE = 'Poisson')
-
         
-        num_node = g.num_nodes
- 
-        grid =  Grid_PWA(g.A, g.mesh, data_args.ratio, hops = data_args.hops, 
-                          cut=data_args.cut, h = 1, nu = 0, BC = 'Dirichlet') 
-        
-        lvl = 3
-        dict_data = make_graph(lvl, grid, data_args.ratio)
-        
-        num_dom = grid.aggop[0].shape[-1]
+        while num_node < 8000 or num_node>10000:
             
+            n = np.random.choice([3,4,5,6,7,8,9,10,20,40])
+            randomized = True if np.random.rand() < 0.4 else True
+            g = rand_grid_gen1(randomized = randomized, n = n, min_ = 0.03, min_sz = 0.6, 
+                          lcmin = data_args.size, lcmax = data_args.size, distmin = 0.01, distmax = 0.035, PDE = 'Poisson')
+    
             
+            num_node = g.num_nodes
+     
+            grid =  Grid_PWA(g.A, g.mesh, data_args.ratio, hops = data_args.hops, 
+                              cut=data_args.cut, h = 1, nu = 0, BC = 'Dirichlet') 
+            
+            lvl = 3
+            dict_data = make_graph(lvl, grid, data_args.ratio)
+            
+            num_dom = grid.aggop[0].shape[-1]
+                
+                
         print("grid number = ", i, ", number of nodes  ", num_node, ", number of domains = ", num_dom)
         
         if show_fig:
             grid.plot_agg(size = 1, labeling = False, w = 0.1,shade = 0.01)
             plt.title (f'Grid nodes = {grid.A.shape[0]}, subdomains = {num_dom}, nodes = {num_node}')
             plt.show()
-            
+                
         grid.dict_data = dict_data
         torch.save(grid, path+"/grid"+str(i)+".pth")
+        num_node = 0
     torch.save(data_args, path+"/data_config.pth")
             
 generate_data(data_args, show_fig = False)

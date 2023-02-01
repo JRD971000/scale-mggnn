@@ -19,10 +19,10 @@ import copy
 import random
 from Unstructured import *
 import scipy
-from grids import *
+from grids_gpu import *
 import time
 from fgmres import *
-from utils import *
+from utils_gpu import *
 from lloyd_gunet import *
 from mggnn import *
 mpl.rcParams['figure.dpi'] = 300
@@ -33,8 +33,8 @@ test_parser = argparse.ArgumentParser(description='Settings for training machine
 test_parser.add_argument('--precond', type=bool, default=True, help='Test as a preconditioner')
 test_parser.add_argument('--stationary', type=bool, default=True, help='Test as a stationary algorithm')
 test_parser.add_argument('--plot', type=bool, default=False, help='Plot the test grid')
-test_parser.add_argument('--model-dir', type=str, default= 'Models/new-gunet/model_epoch_best.pth', help='Model directory')
-test_parser.add_argument('--GNN', type=str, default= 'Graph-Unet', help='MG-GNN or Graph-Unet')
+test_parser.add_argument('--model-dir', type=str, default= 'Models/new-model/model_epoch_best.pth', help='Model directory')
+test_parser.add_argument('--GNN', type=str, default= 'MG-GNN', help='MG-GNN or Graph-Unet')
 test_parser.add_argument('--data-dir', type=str, default= 'Data/new_data', help='Test data directory')
 test_parser.add_argument('--data-index', type=int, default= 0, help='Index of the test grid')
 

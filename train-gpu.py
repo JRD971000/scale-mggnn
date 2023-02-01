@@ -32,8 +32,8 @@ else:
     
 train_parser = argparse.ArgumentParser(description='Settings for training machine learning for ORAS')
 
-train_parser.add_argument('--num-epoch', type=int, default=100, help='Number of training epochs')
-train_parser.add_argument('--mini-batch-size', type=int, default=1, help='Coarsening ratio for aggregation')
+train_parser.add_argument('--num-epoch', type=int, default=50, help='Number of training epochs')
+train_parser.add_argument('--mini-batch-size', type=int, default=10, help='Coarsening ratio for aggregation')
 train_parser.add_argument('--lr', type=float, default= 5e-4, help='Learning rate')
 train_parser.add_argument('--TAGConv-k', type=int, default=2, help='TAGConv # of hops')
 train_parser.add_argument('--dim', type=int, default=128, help='Dimension of TAGConv filter')
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     print('Finished Uploading Training Data')
     
     if train_args.GNN == 'MG-GNN':
-        model = MGGNN(lvl=3, dim_embed=128, num_layers=1, K=train_args.TAGConv_k, ratio=0.2, lr=train_args.lr)
+        model = MGGNN(lvl=3, dim_embed=128, num_layers=4, K=train_args.TAGConv_k, ratio=0.2, lr=train_args.lr)
     elif train_args.GNN == 'Graph-Unet':
         model = lloyd_gunet(2, 4, 128, K = 2, ratio = 0.2, lr = train_args.lr)
     else:
