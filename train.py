@@ -25,6 +25,7 @@ import argparse
 from mggnn import *
 from lloyd_gunet import *
 
+
 if torch.cuda.is_available():
     device = torch.device('cuda')
 else:

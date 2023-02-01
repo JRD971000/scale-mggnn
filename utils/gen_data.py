@@ -34,8 +34,8 @@ data_parser = argparse.ArgumentParser(description='Settings for generating data'
 
 data_parser.add_argument('--directory', type=str, default='../Data/new_data', help='Saving directory')
 data_parser.add_argument('--num-data', type=int, default=1, help='Number of generated data')
-data_parser.add_argument('--ratio', type=tuple, default=(0.012, 0.03), help='Lower and upper bound for ratio')
-data_parser.add_argument('--size-unstructured', type=tuple, default=(0.2, 0.5), help='Lower and upper bound for  unstructured size')
+data_parser.add_argument('--ratio', type=float, default=0.05, help='Lower and upper bound for ratio')
+data_parser.add_argument('--size', type=float, default=0.05, help='Mesh size')
 data_parser.add_argument('--hops', type=int, default=1, help='Learnable hops away from boundary')
 data_parser.add_argument('--cut', type=int, default=1, help='RAS delta')
 
@@ -164,24 +164,20 @@ def generate_data(data_args, show_fig = False):
         
 
     for i in range(data_args.num_data):
-        
-        lcmin = 0.2#np.random.uniform(0.105, 0.12)
 
-        lcmax = 0.2#np.random.uniform(0.10, 0.12)
         n = np.random.choice([3,4,5,6,7,8,9,10,20,40])
         randomized = True if np.random.rand() < 0.4 else True
         g = rand_grid_gen1(randomized = randomized, n = n, min_ = 0.03, min_sz = 0.6, 
-                      lcmin = lcmin, lcmax = lcmax, distmin = 0.01, distmax = 0.035, PDE = 'Poisson')
+                      lcmin = data_args.size, lcmax = data_args.size, distmin = 0.01, distmax = 0.035, PDE = 'Poisson')
 
         
         num_node = g.num_nodes
-        ratio = 1/12 #25*((g.num_nodes/600)**0.5)/g.num_nodes
-
-        grid =  Grid_PWA(g.A, g.mesh, max(2/g.num_nodes, ratio), hops = data_args.hops, 
+ 
+        grid =  Grid_PWA(g.A, g.mesh, data_args.ratio, hops = data_args.hops, 
                           cut=data_args.cut, h = 1, nu = 0, BC = 'Dirichlet') 
         
         lvl = 3
-        dict_data = make_graph(lvl, grid, ratio)
+        dict_data = make_graph(lvl, grid, data_args.ratio)
         
         num_dom = grid.aggop[0].shape[-1]
             
