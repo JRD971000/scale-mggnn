@@ -41,6 +41,8 @@ train_parser.add_argument('--data-set', type=str, default='Data/new_data', help=
 train_parser.add_argument('--K', type=int, default=10, help='Number of iterations in the loss function')
 train_parser.add_argument('--GNN', type=str, default='MG-GNN', help='MG-GNN or Graph-Unet')
 train_parser.add_argument('--path', type=str, default='Models/new-model', help='MG-GNN or Graph-Unet')
+train_parser.add_argument('--lvl', type=int, default=3, help='Number of Levels')
+train_parser.add_argument('--layer', type=int, default=4, help='Number of Layers')
 
 train_args = train_parser.parse_args()
 
@@ -64,9 +66,9 @@ if __name__ == "__main__":
     print('Finished Uploading Training Data')
     
     if train_args.GNN == 'MG-GNN':
-        model = MGGNN(lvl=3, dim_embed=128, num_layers=4, K=train_args.TAGConv_k, ratio=0.2, lr=train_args.lr)
+        model = MGGNN(lvl=train_args.lvl, dim_embed=128, num_layers=train_args.layer, K=train_args.TAGConv_k, ratio=0.2, lr=train_args.lr)
     elif train_args.GNN == 'Graph-Unet':
-        model = lloyd_gunet(2, 4, 128, K = 2, ratio = 0.2, lr = train_args.lr)
+        model = lloyd_gunet(train_args.lvl, train_args.layer, 128, K = 2, ratio = 0.2, lr = train_args.lr)
     else:
         raise ValueError("Select GNN architecture between MG-GNN and Graph-Unet")
     
