@@ -6,7 +6,7 @@ Created on Wed Aug 24 15:21:11 2022
 @author: alitaghibakhshi
 """
 import sys
-sys.path.insert(1, '/utils')
+sys.path.append('utils')
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -25,6 +25,7 @@ from fgmres import *
 from utils import *
 from lloyd_gunet import *
 from mggnn import *
+from gen_data import make_graph
 mpl.rcParams['figure.dpi'] = 300
 import argparse
 
@@ -33,9 +34,9 @@ test_parser = argparse.ArgumentParser(description='Settings for training machine
 test_parser.add_argument('--precond', type=bool, default=True, help='Test as a preconditioner')
 test_parser.add_argument('--stationary', type=bool, default=True, help='Test as a stationary algorithm')
 test_parser.add_argument('--plot', type=bool, default=False, help='Plot the test grid')
-test_parser.add_argument('--model-dir', type=str, default= 'Models/new-gunet/model_epoch_best.pth', help='Model directory')
-test_parser.add_argument('--GNN', type=str, default= 'Graph-Unet', help='MG-GNN or Graph-Unet')
-test_parser.add_argument('--data-dir', type=str, default= 'Data/new_data', help='Test data directory')
+test_parser.add_argument('--model-dir', type=str, default= 'Models/model_epoch_best.pth', help='Model directory')
+test_parser.add_argument('--GNN', type=str, default= 'MG-GNN', help='MG-GNN or Graph-Unet')
+test_parser.add_argument('--data-dir', type=str, default= 'Data/test', help='Test data directory')
 test_parser.add_argument('--data-index', type=int, default= 0, help='Index of the test grid')
 
 test_args = test_parser.parse_args()
@@ -93,7 +94,9 @@ def test_stats(grid, dict_stats, list_test):
 if __name__ =='__main__':
 
         grid = torch.load(test_args.data_dir+'/grid'+str(test_args.data_index)+'.pth')
-
+        dict_data = make_graph(2, grid, 0.01)
+        grid.dict_data = dict_data
+        
         if test_args.plot:
     
             grid.plot_agg(size = 0.08, labeling = False, w = 0.1, shade=0.007)
@@ -101,7 +104,7 @@ if __name__ =='__main__':
 
                 
         if test_args.GNN == 'MG-GNN':
-            model = MGGNN(lvl=3, dim_embed=128, num_layers=4, K=2, ratio=0.2, lr=1e-4)
+            model = MGGNN(lvl=2, dim_embed=128, num_layers=4, K=2, ratio=0.2, lr=1e-4)
         elif test_args.GNN == 'Graph-Unet':
             model = lloyd_gunet(3, 4, 128, K = 2, ratio = 0.2, lr = 1e-4)
         else:
@@ -109,7 +112,7 @@ if __name__ =='__main__':
             
         directory  = test_args.model_dir
 
-        model.load_state_dict(torch.load(directory, map_location=torch.device('cpu')))
+        model.load_state_dict(torch.load(directory, map_location=torch.device('cpu')),strict=False)
         
         list_test = ['RAS', 'ML_ORAS']
         list_label = {'RAS':'RAS', 'ML_ORAS': 'MLORAS'}#

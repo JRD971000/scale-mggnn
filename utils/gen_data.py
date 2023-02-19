@@ -34,7 +34,7 @@ data_parser = argparse.ArgumentParser(description='Settings for generating data'
 
 data_parser.add_argument('--directory', type=str, default='../Data/new_data', help='Saving directory')
 data_parser.add_argument('--num-data', type=int, default=100, help='Number of generated data')
-data_parser.add_argument('--ratio', type=float, default=0.05, help='Lower and upper bound for ratio')
+data_parser.add_argument('--ratio', type=float, default=0.033, help='Lower and upper bound for ratio')
 data_parser.add_argument('--size', type=float, default=0.05, help='Mesh size')
 data_parser.add_argument('--hops', type=int, default=1, help='Learnable hops away from boundary')
 data_parser.add_argument('--cut', type=int, default=1, help='RAS delta')
@@ -174,14 +174,15 @@ def generate_data(data_args, show_fig = False):
     
             
             num_node = g.num_nodes
-     
-            grid =  Grid_PWA(g.A, g.mesh, data_args.ratio, hops = data_args.hops, 
-                              cut=data_args.cut, h = 1, nu = 0, BC = 'Dirichlet') 
             
-            lvl = 3
-            dict_data = make_graph(lvl, grid, data_args.ratio)
-            
-            num_dom = grid.aggop[0].shape[-1]
+        data_args.ratio = 25*((g.num_nodes/600)**0.5)/g.num_nodes
+        grid =  Grid_PWA(g.A, g.mesh, data_args.ratio, hops = data_args.hops, 
+                          cut=data_args.cut, h = 1, nu = 0, BC = 'Dirichlet') 
+        
+        lvl = 2
+        dict_data = make_graph(lvl, grid, data_args.ratio)
+        
+        num_dom = grid.aggop[0].shape[-1]
                 
                 
         print("grid number = ", i, ", number of nodes  ", num_node, ", number of domains = ", num_dom)

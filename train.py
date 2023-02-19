@@ -22,8 +22,13 @@ import scipy
 from grids import *
 from utils import *
 import argparse
-from mggnn import *
+from mggnn_old import *
 from lloyd_gunet import *
+
+manual_seeding = 0
+np.random.seed(manual_seeding)
+random.seed(manual_seeding)
+torch.manual_seed(manual_seeding)
 
 
 if torch.cuda.is_available():
@@ -34,29 +39,30 @@ else:
     
 train_parser = argparse.ArgumentParser(description='Settings for training machine learning for ORAS')
 
-train_parser.add_argument('--num-epoch', type=int, default=100, help='Number of training epochs')
-train_parser.add_argument('--mini-batch-size', type=int, default=1, help='Coarsening ratio for aggregation')
+train_parser.add_argument('--num-epoch', type=int, default=30, help='Number of training epochs')
+train_parser.add_argument('--mini-batch-size', type=int, default=10, help='Coarsening ratio for aggregation')
 train_parser.add_argument('--lr', type=float, default= 5e-4, help='Learning rate')
 train_parser.add_argument('--TAGConv-k', type=int, default=2, help='TAGConv # of hops')
 train_parser.add_argument('--dim', type=int, default=128, help='Dimension of TAGConv filter')
-train_parser.add_argument('--data-set', type=str, default='Data/new_data', help='Directory of the training data')
+train_parser.add_argument('--data-set', type=str, default='Data/old_data', help='Directory of the training data')
 train_parser.add_argument('--K', type=int, default=10, help='Number of iterations in the loss function')
-train_parser.add_argument('--GNN', type=str, default='Graph-Unet', help='MG-GNN or Graph-Unet')
+train_parser.add_argument('--GNN', type=str, default='MG-GNN', help='MG-GNN or Graph-Unet')
 
 train_args = train_parser.parse_args()
 
 
 if __name__ == "__main__":
-    
+  
+# for ccc in range(10):
         
-    path = 'Models/new-gunet'
+    path = 'Models/mggnn_old'
     
     if not os.path.exists(path):
         os.makedirs(path)
     
     list_grids = []
     
-    num_data = 1#sum((len(f) for _, _, f in os.walk(train_args.data_set)))-1
+    num_data = 100#sum((len(f) for _, _, f in os.walk(train_args.data_set)))-1
 
     for i in range(num_data):
 
@@ -68,10 +74,10 @@ if __name__ == "__main__":
     if train_args.GNN == 'MG-GNN':
         model = MGGNN(lvl=2, dim_embed=128, num_layers=4, K=train_args.TAGConv_k, ratio=0.2, lr=train_args.lr)
     elif train_args.GNN == 'Graph-Unet':
-        model = lloyd_gunet(3, 4, 128, K = 2, ratio = 0.2, lr = train_args.lr)
+        model = lloyd_gunet(2, 4, 128, K = 2, ratio = 0.2, lr = train_args.lr)
     else:
         raise ValueError("Select GNN architecture between MG-GNN and Graph-Unet")
-    
+    model.load_state_dict(torch.load('Models/model_trained.pth'))
     print('Number of parameters: ',sum(p.numel() for p in model.parameters()))
 
     epoch_loss_list = []
@@ -99,14 +105,13 @@ if __name__ == "__main__":
                 grid = list_grids[i]
                 
                 output = model.forward(grid, train = True)
-                
+
                 u = torch.rand(grid.x.shape[0],100).double().to(device)
                 u = u/(((u**2).sum(0))**0.5).unsqueeze(0)
-  
                 current_loss = stationary_max(grid, output, u = u, K = train_args.K, precond_type='ML_ORAS')
 
                 loss += current_loss
-            
+
             # if loss > 2.5 * mbs:
             #     print("Bad initialization")
             #     sys.exit()

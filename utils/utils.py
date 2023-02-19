@@ -127,9 +127,9 @@ def get_Li (L, grid, train):
             idx_s = torch.tensor([list_idx, np.arange(len(list_idx)).tolist()]).to(device)
             s = torch.sparse_coo_tensor(idx_s, torch.ones(len(list_idx)),(len(nz), len(list_idx))).to(device).double().to_sparse_csr()
     
-            # L_i[i][np.ix_(list_idx, list_idx)] = L[np.ix_(learnables, learnables)]
+            L_i[i][np.ix_(list_idx, list_idx)] = L[np.ix_(learnables, learnables)]
     
-            L_i[i] = s @ (r.t() @ L @ r) @ s.t()
+            # L_i[i] = s @ (r.t() @ L @ r) @ s.t()
             
     
         return L_i
@@ -394,7 +394,7 @@ def preconditioner(grid, output, train = False, precond_type = False, u = None):
                 AA =  grid_Rhop_i @ tsA @ grid_Rhop_i.t()  ####SPSPMM
     
                 # AA = torch.tensor(grid.R_hop[i].toarray()) @ torch.tensor(grid.A.toarray()) @ torch.tensor(grid.R_hop[i].transpose().toarray())
-                A_tilde_inv = torch.linalg.pinv(AA.to_dense() + (1/(grid.h**2))*modified_L.to_dense())
+                A_tilde_inv = torch.linalg.pinv(AA.to_dense() + (1/(grid.h**2))*modified_L)
                 # add_M = make_sparse_torch(scipy.sparse.csr_matrix(modified_R_i)).t() @ make_sparse_torch(A_tilde_inv, False) @ make_sparse_torch(grid.R_hop[i])
                 # M += add_M.to_dense()
                 
@@ -517,15 +517,13 @@ def stationary_max(grid, out, u = None, K = None, precond_type = 'ML_ORAS'):
 
     mloras_Pcol_norm = 0
     ras_Pcol_norm = 0
-    
+    r0 = torch.tensor(grid.R0.toarray())
     for i in range(grid.R0.shape[0]):
         
         mloras_Pcol_norm += out[1].to_dense()[i] @ tsA @ out[1].to_dense().t()[:,i]
-        r0 = torch.tensor(grid.R0.toarray())
-        ras_Pcol_norm += r0[i] @ tsA @ r0.t()[:,i]
-    
+        ras_Pcol_norm    += r0[i] @ tsA @ r0.t()[:,i]
+
     pcol_loss = mloras_Pcol_norm/ras_Pcol_norm
-    
     return L_max + pcol_loss*5.0
 
 
