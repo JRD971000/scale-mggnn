@@ -20,9 +20,18 @@ import scipy
 from grids_gpu import *
 from utils_gpu import *
 import argparse
-from mggnn import *
+from mggnn_gpu import *
 from lloyd_gunet import *
 import time
+
+manual_seeding = 34210
+np.random.seed(manual_seeding)
+random.seed(manual_seeding)
+torch.manual_seed(manual_seeding)
+# torch.use_deterministic_algorithms(True)
+# torch.backends.cudnn.deterministic = True
+# torch.backends.cudnn.benchmark = False
+
 
 if torch.cuda.is_available():
     device = torch.device('cuda')
@@ -32,16 +41,16 @@ else:
     
 train_parser = argparse.ArgumentParser(description='Settings for training machine learning for ORAS')
 
-train_parser.add_argument('--num-epoch', type=int, default=50, help='Number of training epochs')
-train_parser.add_argument('--mini-batch-size', type=int, default=10, help='Coarsening ratio for aggregation')
+train_parser.add_argument('--num-epoch', type=int, default=10, help='Number of training epochs')
+train_parser.add_argument('--mini-batch-size', type=int, default=1, help='Coarsening ratio for aggregation')
 train_parser.add_argument('--lr', type=float, default= 5e-4, help='Learning rate')
 train_parser.add_argument('--TAGConv-k', type=int, default=2, help='TAGConv # of hops')
 train_parser.add_argument('--dim', type=int, default=128, help='Dimension of TAGConv filter')
-train_parser.add_argument('--data-set', type=str, default='Data/new_data', help='Directory of the training data')
+train_parser.add_argument('--data-set', type=str, default='Data/old_data', help='Directory of the training data')
 train_parser.add_argument('--K', type=int, default=10, help='Number of iterations in the loss function')
 train_parser.add_argument('--GNN', type=str, default='MG-GNN', help='MG-GNN or Graph-Unet')
-train_parser.add_argument('--path', type=str, default='Models/new-model', help='MG-GNN or Graph-Unet')
-train_parser.add_argument('--lvl', type=int, default=3, help='Number of Levels')
+train_parser.add_argument('--path', type=str, default='Models/old-model', help='MG-GNN or Graph-Unet')
+train_parser.add_argument('--lvl', type=int, default=2, help='Number of Levels')
 train_parser.add_argument('--layer', type=int, default=4, help='Number of Layers')
 
 train_args = train_parser.parse_args()
@@ -72,6 +81,8 @@ if __name__ == "__main__":
     else:
         raise ValueError("Select GNN architecture between MG-GNN and Graph-Unet")
     
+    model.load_state_dict(torch.load('Models/model_epoch_best.pth'), strict=False)
+
     model.to(device)
 
     print('Number of parameters: ',sum(p.numel() for p in model.parameters()))
@@ -101,14 +112,23 @@ if __name__ == "__main__":
                 grid = list_grids[i]
                 grid.to(device)
                 output = model.forward(grid, train = True)
-                
+                sump = 0
+                for p in model.parameters():
+                    sump+=abs(p.flatten()).sum()
+                # print(np.random.rand())
+                # print(torch.rand(3))
+                # print(sump)
+                # print(abs(grid.A).toarray().flatten().sum())
+                # print(output[0].to_dense().flatten().sum())
+                # print(output[1].to_dense().flatten().sum())
+                # sys.exit()
                 u = torch.rand(grid.x.shape[0],100).double().to(device)
                 u = u/(((u**2).sum(0))**0.5).unsqueeze(0)
-  
+
                 current_loss = stationary_max(grid, output, u = u, K = train_args.K, precond_type='ML_ORAS')
 
                 loss += current_loss
-            
+
             # if loss > 2.5 * mbs:
             #     print("Bad initializations")
             #     sys.exit()

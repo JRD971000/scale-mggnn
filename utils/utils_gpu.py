@@ -37,7 +37,7 @@ def get_Li (L, grid):
         learn_mat = torch.sparse_coo_tensor(torch.tensor([[j for j in range(len(learnables))],learnables]),
                                                         torch.tensor([1. for j in range(len(learnables))]),
                                                         (len(learnables),L.shape[0])).double().to(device)
-        learn_mat = spml.SparseCSRTensor(learn_mat, device=device)
+        learn_mat = spml.SparseCSRTensor(learn_mat)#, device=device)
 
         L_i[i] = torch.zeros(len(nz),len(nz)).double().to(device)
 
@@ -234,7 +234,7 @@ def stationary_cycle(A, M, R0, err):
         A0 = R0 @ A @ R0_transpose
         A0_inv = np.linalg.pinv(A0.toarray())#.to(device)
 
-    if type(A) == numml.sparse.SparseCSRTensor:
+    if type(A) == spml.SparseCSRTensor:
 
         A0 = R0 @ A @ R0.T
         A0_inv = torch.linalg.pinv(A0.to_dense()).to(device)
@@ -264,7 +264,7 @@ def stationary_max(grid, out, u = None, K = None, precond_type = 'ML_ORAS'):
     out_lmax = spml.SparseCSRTensor(copy.deepcopy(u)).to(device)
     list_max = torch.zeros(K).to(device)
     tsA = spml.SparseCSRTensor(make_sparse_torch(grid.A)).to(device)
-    R0 = out[1].double().to(device)#spml.SparseCSRTensor(out[1])
+    R0 = out[1].to(device)#spml.SparseCSRTensor(out[1])
 
     for k in range(K):
 
@@ -280,7 +280,7 @@ def stationary_max(grid, out, u = None, K = None, precond_type = 'ML_ORAS'):
     mloras_Pcol_norm = 0
     ras_Pcol_norm = 0
 
-    r0 = spml.SparseCSRTensor(make_sparse_torch(grid.neigh_R0)).to(device).double()
+    r0 = spml.SparseCSRTensor(torch.tensor(grid.R0.toarray())).to(device)#.double()
 
     for i in range(grid.R0.shape[0]):
         idx_mat = spml.SparseCSRTensor(torch.sparse_coo_tensor(torch.tensor([[0],[i]]),
@@ -288,10 +288,10 @@ def stationary_max(grid, out, u = None, K = None, precond_type = 'ML_ORAS'):
                                                                (1,grid.R0.shape[0])).double()).to(device)
 
         mloras_Pcol_norm += (((idx_mat @ R0) @ tsA @ (idx_mat @ R0).T).to_dense()).flatten()
-        ras_Pcol_norm += (((idx_mat @ r0) @ tsA @ (idx_mat @ r0).T).to_dense()).flatten()
+        ras_Pcol_norm    += (((idx_mat @ r0) @ tsA @ (idx_mat @ r0).T).to_dense()).flatten()
 
     pcol_loss = mloras_Pcol_norm/ras_Pcol_norm
-
+    
     return L_max + pcol_loss*5.0
 
 
